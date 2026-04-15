@@ -1,11 +1,14 @@
 ---
 title: 'Assignment 7: Naïve Bayes Classifier'
 author: |
+  | Jacob
   | Assignment written by Sara Sood (while at Pomona College),
   | Northwestern University with changes by Nathan Shelly
 geometry: margin=1in
 urlcolor: cyan
 ---
+
+
 
 You may work alone or in a pair. If you work in a pair, both students must submit the file on GitHub Classroom to get credit. Additionally, please put both students' names at the top of the file as a comment so that there's no academic integrity issues. For example: 
 ```python
