@@ -59,8 +59,8 @@ class BayesClassifier:
         # stored below is how you would load a file with filename given by `fName`
         # `text` here will be the literal text of the file (i.e. what you would see
         # if you opened the file in a text editor
-        # text = self.load_file(os.path.join(self.training_data_directory, fName))
-
+        # text = self.load_file(os.path.join(self.training_data_directory, files[2]))
+        # print(text)
 
         # *Tip:* training can take a while, to make it more transparent, we can use the
         # enumerate function, which loops over something and has an automatic counter.
@@ -69,11 +69,12 @@ class BayesClassifier:
         for index, filename in enumerate(files, 1): # type: ignore
             print(f"Training on file {index} of {len(files)}")
         #     <the rest of your code for updating frequencies here>
+            print(f"(index): (filename)")
             text = self.load_file(os.path.join(self.training_data_directory, filename))
-            # print(text)
+            print(text)
             tokens = self.tokenize(text)
             print(tokens)
-
+            
         # we want to fill pos_freqs and neg_freqs with the correct counts of words from
         # their respective reviews
         
@@ -84,7 +85,10 @@ class BayesClassifier:
         # positive frequency dictionary. If it is neither a postive or negative file,
         # ignore it and move to the next file (this is more just to be safe; we won't
         # test your code with neutral reviews)
-        
+            if filename.startswith(self.pos_file_prefix):
+                self.update_dict(tokens, self.pos_freqs)
+            elif filename.startswith(self.neg_file_prefix):
+                self.update_dict(tokens, self.neg_freqs)
 
         # Updating frequences: to update the frequencies for each file, you need to get
         # the text of the file, tokenize it, then update the appropriate dictionary for
@@ -101,6 +105,8 @@ class BayesClassifier:
         # avoid extra work in the future (using the save_dict method). The objects you
         # are saving are self.pos_freqs and self.neg_freqs and the filepaths to save to
         # are self.pos_filename and self.neg_filename
+        self.save_dict(self.pos_freqs, self.pos_filename)
+        self.save_dict(self.neg_freqs, self.neg_filename)
 
     def classify(self, text: str) -> str:
         """Classifies given text as positive, or negative from calculating the
@@ -116,35 +122,49 @@ class BayesClassifier:
 
         
         # get a list of the individual tokens that occur in text
-        
+        tokens = self.tokenize(text)
 
         # create some variables to store the positive and negative probability. since
         # we will be adding logs of probabilities, the initial values for the positive
         # and negative probabilities are set to 0
-        
+        pos_prb = 0
+        neg_prb = 0
 
         # get the sum of all of the frequencies of the features in each document class
         # (i.e. how many words occurred in all documents for the given class) - this
         # will be used in calculating the probability of each document class given each
         # individual feature
-        
+        total_pos_words = sum(self.pos_freqs.values())
+        total_neg_words = sum(self.neg_freqs.values())
+
+        # vocabulary size for smoothing
+        vocab = set(list(self.pos_freqs.keys()) + list(self.neg_freqs.keys()))
+        V = len(vocab)
 
         # for each token in the text, calculate the probability of it occurring in a
         # postive document and in a negative document and add the logs of those to the
         # running sums. when calculating the probabilities, always add 1 to the numerator
         # of each probability for add one smoothing (so that we never have a probability
         # of 0)
-
-
+        for t in tokens:
+            # positive class probability
+            pos_count = self.pos_freqs.get(t, 0)
+            pos_prb += math.log((pos_count + 1) / (total_pos_words + V))
+            # negative class probability
+            neg_count = self.neg_freqs.get(t, 0)
+            neg_prb += math.log((neg_count + 1) / (total_neg_words + V))
         # for debugging purposes, it may help to print the overall positive and negative
         # probabilities
-        
-
+        print(f"Positive Probabilities: {pos_prb}")
+        print(f"Negative Probabilities: {neg_prb}")
         # determine whether positive or negative was more probable (i.e. which one was
-        # larger)
-        
-
+        # larger)  
         # return a string of "positive" or "negative"
+        if pos_prb > neg_prb:
+            return "positive"
+        else:
+            return "negative"
+        
 
     def load_file(self, filepath: str) -> str:
         """Loads text of given file
@@ -205,7 +225,6 @@ class BayesClassifier:
                 if token != "":
                     tokens.append(token.lower())
                     token = ""
-
         if token != "":
             tokens.append(token.lower())
         return tokens
@@ -223,7 +242,11 @@ class BayesClassifier:
             freqs - dictionary of frequencies to update
         """
         # TODO: your work here
-        
+        for word in words:
+            if word in freqs:
+                freqs[word] += 1
+            else:
+                freqs[word] = 1
 
 if __name__ == "__main__":
     # uncomment the below lines once you've implemented `train` & `classify`
